@@ -91,6 +91,7 @@ export default function Home() {
     [activeQuizId, setActiveQuizId] = useState(""),
     [bulkPoints, setBulkPoints] = useState(1000),
     [bulkSeconds, setBulkSeconds] = useState(20),
+    [riskEnabled, setRiskEnabled] = useState(false),
     [savedQuizzes, setSavedQuizzes] = useState<any[]>([]),
     [username, setUsername] = useState(""),
     [password, setPassword] = useState(""),
@@ -171,6 +172,7 @@ export default function Home() {
           quizId: activeQuizId,
           title,
           questions,
+          riskEnabled,
         });
         setSavedQuizzes(r.quizzes || []);
         setActiveQuizId(r.quizId || activeQuizId);
@@ -210,7 +212,12 @@ export default function Home() {
     create = async () => {
       setBusy(true);
       try {
-        const r = await api("POST", { action: "create", title, questions });
+        const r = await api("POST", {
+          action: "create",
+          title,
+          questions,
+          riskEnabled,
+        });
         setCode(r.code);
         setHostToken(r.hostToken);
         localStorage.setItem(
@@ -362,6 +369,8 @@ export default function Home() {
           setBulkPoints,
           bulkSeconds,
           setBulkSeconds,
+          riskEnabled,
+          setRiskEnabled,
           savedQuizzes,
           saveQuiz,
           copyQuiz,
@@ -522,6 +531,8 @@ function AdminWorkspace(p: any) {
     setBulkPoints,
     bulkSeconds,
     setBulkSeconds,
+    riskEnabled,
+    setRiskEnabled,
     savedQuizzes,
     saveQuiz,
     copyQuiz,
@@ -623,6 +634,7 @@ function AdminWorkspace(p: any) {
                     setActiveQuizId(item.id);
                     setTitle(item.title);
                     setQuestions(item.questions);
+                    setRiskEnabled(!!item.riskEnabled);
                     setSelected(0);
                   }}
                 >
@@ -687,6 +699,17 @@ function AdminWorkspace(p: any) {
                 step="100"
                 value={bulkPoints}
                 onChange={(e) => setBulkPoints(+e.target.value)}
+              />
+            </label>
+            <label className="risktoggle">
+              <span>
+                <b>Risk modu</b>
+                <small>Oyuncular puanlarını riske atabilir</small>
+              </span>
+              <input
+                type="checkbox"
+                checked={riskEnabled}
+                onChange={(e) => setRiskEnabled(e.target.checked)}
               />
             </label>
             <button
@@ -923,7 +946,7 @@ function GameScreen({
           )}
           <h1 id="active-question">{q?.prompt}</h1>
         </div>
-        {!host && !state.hasAnswered && (
+        {!host && room.riskEnabled && !state.hasAnswered && (
           <button
             className={"riskbutton " + (risk ? "active" : "")}
             aria-pressed={risk}

@@ -43,7 +43,7 @@ async function listQuizzes(db: D1Database) {
   const quizzes = (
     await db
       .prepare(
-        "SELECT id,title,created_at FROM quizzes ORDER BY created_at DESC",
+        "SELECT id,title,risk_enabled,created_at FROM quizzes ORDER BY created_at DESC",
       )
       .all<Record<string, any>>()
   ).results;
@@ -56,6 +56,7 @@ async function listQuizzes(db: D1Database) {
   ).results;
   return quizzes.map((q) => ({
     ...q,
+    riskEnabled: !!q.risk_enabled,
     questions: questions
       .filter((x) => x.quiz_id === q.id)
       .map((x) => ({
@@ -99,7 +100,8 @@ export async function POST(request: Request) {
     const db = getRawDb();
     if (action === "save" || action === "update") {
       const title = String(p.title || "").trim(),
-        items = Array.isArray(p.questions) ? p.questions : [];
+        items = Array.isArray(p.questions) ? p.questions : [],
+        riskEnabled = !!p.riskEnabled;
       if (!title || !items.length)
         return json({ error: "Başlık ve soru gerekli." }, 400);
       const quizId =
@@ -134,16 +136,19 @@ export async function POST(request: Request) {
         await db.batch([
           ...cleanup,
           db.prepare("DELETE FROM rooms WHERE quiz_id=?").bind(quizId),
-          db.prepare("UPDATE quizzes SET title=? WHERE id=?").bind(title, quizId),
+          db
+            .prepare("UPDATE quizzes SET title=?,risk_enabled=? WHERE id=?")
+            .bind(title, riskEnabled ? 1 : 0, quizId),
           db.prepare("DELETE FROM questions WHERE quiz_id=?").bind(quizId),
           ...inserts,
         ]);
-      }
-      else
+      } else
         await db.batch([
           db
-            .prepare("INSERT INTO quizzes(id,title,created_at) VALUES(?,?,?)")
-            .bind(quizId, title, now),
+            .prepare(
+              "INSERT INTO quizzes(id,title,risk_enabled,created_at) VALUES(?,?,?,?)",
+            )
+            .bind(quizId, title, riskEnabled ? 1 : 0, now),
           ...inserts,
         ]);
       return json({ saved: true, quizId, quizzes: await listQuizzes(db) }, 201);
@@ -156,8 +161,15 @@ export async function POST(request: Request) {
       const quizId = crypto.randomUUID();
       await db.batch([
         db
-          .prepare("INSERT INTO quizzes(id,title,created_at) VALUES(?,?,?)")
-          .bind(quizId, q.title + " — Kopya", Date.now()),
+          .prepare(
+            "INSERT INTO quizzes(id,title,risk_enabled,created_at) VALUES(?,?,?,?)",
+          )
+          .bind(
+            quizId,
+            q.title + " — Kopya",
+            q.riskEnabled ? 1 : 0,
+            Date.now(),
+          ),
         ...q.questions.map((x: any, i: number) =>
           db
             .prepare(
@@ -211,10 +223,14 @@ export async function POST(request: Request) {
       if (!count) return json({ error: "Yarışma bulunamadı." }, 404);
       const roomCode = String(Math.floor(100000 + Math.random() * 900000)),
         hostToken = crypto.randomUUID(),
-        doubleQuestion = count > 2 ? Math.floor(Math.random() * count) : -1;
+        doubleQuestion = count > 2 ? Math.floor(Math.random() * count) : -1,
+        quiz = await db
+          .prepare("SELECT risk_enabled FROM quizzes WHERE id=?")
+          .bind(quizId)
+          .first<any>();
       await db
         .prepare(
-          "INSERT INTO rooms(id,code,quiz_id,host_token,status,current_question,double_question,created_at) VALUES(?,?,?,?,?,?,?,?)",
+          "INSERT INTO rooms(id,code,quiz_id,host_token,status,current_question,double_question,risk_enabled,created_at) VALUES(?,?,?,?,?,?,?,?,?)",
         )
         .bind(
           crypto.randomUUID(),
@@ -224,6 +240,7 @@ export async function POST(request: Request) {
           "lobby",
           -1,
           doubleQuestion,
+          quiz?.risk_enabled ? 1 : 0,
           Date.now(),
         )
         .run();

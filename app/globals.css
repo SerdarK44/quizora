@@ -2149,6 +2149,65 @@ select:focus {
   border-radius: 0.65rem;
   padding: 0.7rem;
 }
+.risktoggle {
+  display: flex !important;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.65rem;
+  border: 1px solid var(--line);
+  border-radius: 0.7rem;
+  background: #fff;
+  color: var(--ink) !important;
+}
+.risktoggle span {
+  min-width: 0;
+}
+.risktoggle b,
+.risktoggle small {
+  display: block;
+}
+.risktoggle b {
+  font-size: 0.74rem;
+}
+.risktoggle small {
+  margin-top: 0.14rem;
+  color: var(--muted);
+  font-size: 0.6rem;
+  font-weight: 650;
+  line-height: 1.25;
+}
+.risktoggle input {
+  appearance: none;
+  width: 2.55rem !important;
+  height: 1.4rem;
+  flex: none;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 999px !important;
+  background: #cfcac0 !important;
+  position: relative;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.risktoggle input:after {
+  content: "";
+  position: absolute;
+  width: 1.05rem;
+  height: 1.05rem;
+  left: 0.18rem;
+  top: 0.175rem;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 0.1rem 0.3rem #0003;
+  transition: transform 0.2s var(--ease);
+}
+.risktoggle input:checked {
+  background: #f0522d !important;
+}
+.risktoggle input:checked:after {
+  transform: translateX(1.15rem);
+}
 .builderpane {
   min-width: 0;
   overflow: hidden;

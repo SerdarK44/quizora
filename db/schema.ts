@@ -8,6 +8,9 @@ import {
 export const quizzes = sqliteTable("quizzes", {
   id: text("id").primaryKey(),
   title: text("title").notNull(),
+  riskEnabled: integer("risk_enabled", { mode: "boolean" })
+    .notNull()
+    .default(false),
   createdAt: integer("created_at").notNull(),
 });
 export const questions = sqliteTable(
@@ -40,6 +43,9 @@ export const rooms = sqliteTable(
     currentQuestion: integer("current_question").notNull().default(-1),
     questionStartedAt: integer("question_started_at"),
     doubleQuestion: integer("double_question").notNull().default(-1),
+    riskEnabled: integer("risk_enabled", { mode: "boolean" })
+      .notNull()
+      .default(false),
     createdAt: integer("created_at").notNull(),
   },
   (t) => [uniqueIndex("idx_rooms_code").on(t.code)],

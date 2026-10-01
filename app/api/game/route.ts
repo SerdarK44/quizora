@@ -190,6 +190,7 @@ export async function GET(request: Request) {
         questionStartedAt: room.question_started_at,
         totalQuestions: qs.length,
         isDouble: qi === Number(room.double_question),
+        riskEnabled: !!room.risk_enabled,
       },
       question: q
         ? {
@@ -230,7 +231,8 @@ export async function POST(request: Request) {
       if (!isAdmin(request))
         return json({ error: "Yönetici oturumu gerekli." }, 401);
       const title = String(p.title || "").trim(),
-        items = Array.isArray(p.questions) ? (p.questions as any[]) : [];
+        items = Array.isArray(p.questions) ? (p.questions as any[]) : [],
+        riskEnabled = !!p.riskEnabled;
       if (
         !title ||
         !items.length ||
@@ -249,8 +251,10 @@ export async function POST(request: Request) {
         now = Date.now();
       await db.batch([
         db
-          .prepare("INSERT INTO quizzes(id,title,created_at) VALUES(?,?,?)")
-          .bind(quizId, title, now),
+          .prepare(
+            "INSERT INTO quizzes(id,title,risk_enabled,created_at) VALUES(?,?,?,?)",
+          )
+          .bind(quizId, title, riskEnabled ? 1 : 0, now),
         ...items.map((q, i) =>
           db
             .prepare(
@@ -270,7 +274,7 @@ export async function POST(request: Request) {
         ),
         db
           .prepare(
-            "INSERT INTO rooms(id,code,quiz_id,host_token,status,current_question,double_question,created_at) VALUES(?,?,?,?,?,?,?,?)",
+            "INSERT INTO rooms(id,code,quiz_id,host_token,status,current_question,double_question,risk_enabled,created_at) VALUES(?,?,?,?,?,?,?,?,?)",
           )
           .bind(
             roomId,
@@ -280,6 +284,7 @@ export async function POST(request: Request) {
             "lobby",
             -1,
             items.length > 2 ? Math.floor(Math.random() * items.length) : -1,
+            riskEnabled ? 1 : 0,
             now,
           ),
       ]);
@@ -373,7 +378,7 @@ export async function POST(request: Request) {
         return json({ error: "Süre doldu." }, 409);
       const option = Number(p.optionIndex),
         correct = option === Number(q.correct_index),
-        risk = !!p.risk,
+        risk = !!room.risk_enabled && !!p.risk,
         elapsed = Math.max(0, Date.now() - Number(room.question_started_at)),
         ratio = Math.max(0, 1 - elapsed / (Number(q.seconds) * 1000)),
         maxPoints = Number(q.max_points) || 1000,

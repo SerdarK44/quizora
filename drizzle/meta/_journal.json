@@ -22,6 +22,13 @@
       "when": 1790877903588,
       "tag": "0002_square_captain_universe",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1790879320108,
+      "tag": "0003_milky_peter_quill",
+      "breakpoints": true
     }
   ]
 }
