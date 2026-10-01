@@ -2291,6 +2291,240 @@ select:focus {
   }
 }
 
+/* Tur sonucu v3 — daha kompakt, skor odaklı */
+.answerreveal {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  text-align: left;
+}
+.answercheck {
+  width: 3.4rem;
+  height: 3.4rem;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border-radius: 1rem;
+  background: #19a66b;
+  color: #fff;
+  font-size: 1.7rem;
+  font-weight: 950;
+  box-shadow: 0 0.6rem 1.5rem #0003;
+}
+.answerreveal h1 {
+  margin: 0.25rem 0 0;
+}
+.boardheading {
+  width: min(36rem, 100%);
+  display: flex;
+  justify-content: space-between;
+  align-items: end;
+  text-align: left;
+}
+.boardheading h2 {
+  margin: 0.3rem 0 0;
+}
+.boardheading > span {
+  color: var(--muted);
+  background: #ebe8e1;
+  padding: 0.4rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 850;
+}
+.roundawards {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  width: min(31rem, 100%);
+}
+.roundawards > div {
+  min-width: 8.5rem;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  column-gap: 0.45rem;
+  align-items: center;
+  padding: 0.65rem 0.75rem;
+  background: #ffffff0d;
+  border: 1px solid #ffffff1f;
+  border-radius: 0.8rem;
+  text-align: left;
+}
+.roundawards > div > span {
+  grid-row: 1/3;
+  font-size: 1.2rem;
+}
+.roundawards small {
+  color: #aeb9c9;
+  font-size: 0.65rem;
+  font-weight: 750;
+}
+.roundawards b {
+  max-width: 8rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #fff;
+  font-size: 0.78rem;
+}
+.myround {
+  grid-template-columns: repeat(3, 1fr) auto;
+}
+.myround > div {
+  display: grid;
+  gap: 0.18rem;
+}
+.myround > div + div {
+  border-left: 1px solid #ffffff1c;
+  padding-left: 0.8rem;
+}
+.myround small {
+  color: #9da9b9;
+  font-size: 0.6rem;
+  letter-spacing: 0.08em;
+  font-weight: 850;
+}
+.myround > div b,
+.myround > div strong {
+  font-size: 1.2rem;
+  color: #fff;
+}
+.myround > div:first-child b {
+  color: #ff7655;
+}
+.negative {
+  color: #ef5361 !important;
+}
+
+@media (max-width: 760px) {
+  .roundresults {
+    min-height: calc(100svh - 4rem);
+    display: flex;
+    flex-direction: column;
+    background: #f6f5f2;
+  }
+  .correctanswer {
+    min-height: 0;
+    padding: 1.25rem 1rem 1.1rem;
+    justify-content: flex-start;
+    flex: none;
+  }
+  .correctanswer:before {
+    width: 17rem;
+    height: 17rem;
+    border-width: 3rem;
+    opacity: 0.45;
+  }
+  .answerreveal {
+    width: min(32rem, 100%);
+    justify-content: center;
+  }
+  .answercheck {
+    width: 2.65rem;
+    height: 2.65rem;
+    border-radius: 0.75rem;
+    font-size: 1.25rem;
+  }
+  .correctanswer .answerreveal h1 {
+    font-size: clamp(1.75rem, 8vw, 2.35rem);
+    margin: 0.15rem 0 0;
+  }
+  .correctanswer .kicker {
+    font-size: 0.62rem;
+  }
+  .roundquip {
+    margin-top: 0.75rem;
+    padding: 0.58rem 0.75rem;
+    border-radius: 0.65rem;
+    box-shadow: 0.2rem 0.2rem 0 #f0522d;
+    font-size: 0.74rem;
+  }
+  .roundawards {
+    margin-top: 0.75rem;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.35rem;
+  }
+  .roundawards > div {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.15rem;
+    padding: 0.5rem;
+  }
+  .roundawards > div > span {
+    font-size: 0.9rem;
+  }
+  .roundawards small {
+    font-size: 0.55rem;
+  }
+  .roundawards b {
+    max-width: 100%;
+    font-size: 0.68rem;
+  }
+  .roundboard {
+    flex: 1;
+    justify-content: flex-start;
+    padding: 1rem 0.85rem max(1rem, env(safe-area-inset-bottom));
+    text-align: left;
+  }
+  .boardheading {
+    align-items: center;
+  }
+  .boardheading h2 {
+    font-size: 1.55rem;
+  }
+  .boardheading > span {
+    font-size: 0.62rem;
+  }
+  .myround {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.45rem;
+    margin-top: 0.8rem;
+    padding: 0.7rem 0.75rem;
+  }
+  .myround > div + div {
+    padding-left: 0.55rem;
+  }
+  .myround > div b,
+  .myround > div strong {
+    font-size: 1.05rem;
+  }
+  .myround i {
+    grid-column: 1/-1;
+    padding: 0.35rem 0.45rem;
+    font-size: 0.68rem;
+  }
+  .roundboard .ranking {
+    width: 100%;
+    margin: 0.65rem 0 0.85rem;
+  }
+  .roundboard .ranking > div {
+    min-height: 2.8rem;
+    grid-template-columns: 2rem minmax(0, 1fr) auto;
+    padding: 0.5rem 0.65rem;
+  }
+  .roundboard .ranking span {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .roundboard .waitingnext {
+    width: 100%;
+    margin: 0;
+    padding: 0.65rem;
+    border-radius: 0.7rem;
+    background: #ebe8e1;
+    text-align: center;
+    font-size: 0.75rem;
+  }
+  .roundboard > .primary {
+    width: 100%;
+  }
+}
+
 /* Live quiz v2 */
 .gamescreen {
   height: 100svh;
@@ -2602,56 +2836,279 @@ select:focus {
 .quizsearch {
   width: 100%;
   min-height: 2.55rem;
-  margin-bottom: .65rem;
+  margin-bottom: 0.65rem;
   border: 1px solid var(--line);
-  border-radius: .7rem;
-  padding: .6rem .7rem;
+  border-radius: 0.7rem;
+  padding: 0.6rem 0.7rem;
   background: #f8f7f3;
 }
-.librarylist article { grid-template-columns: minmax(0,1fr) auto; }
-.librarylist article.selected > button:first-child { border-color: #f0522d; background: #fff7f3; }
-.libactions { display: grid; grid-template-columns: repeat(3,2rem); gap: .22rem; }
-.libactions button { border: 0; border-radius: .55rem; background: #121b2b; color: #fff; font-weight: 900; }
-.libactions button:last-child { background: #fff0ed; color: #bd3529; border: 1px solid #f2cbc4; }
-.questionstrip > button[draggable="true"] { cursor: grab; }
-.questionstrip > button[draggable="true"]:active { cursor: grabbing; }
-.questioncanvas { position: relative; }
-.previewtoggle { position: absolute; right: 1.1rem; top: 2.35rem; z-index: 2; border: 1px solid var(--line); border-radius: 999px; padding: .4rem .65rem; background: #fff; color: var(--ink); font-size: .7rem; font-weight: 850; }
-.editorquestionimage { display: block; width: min(100%,30rem); height: 11rem; object-fit: cover; margin: 0 auto .75rem; border-radius: .9rem; background: #eee; }
-.previewprompt { min-height: 8rem; margin: 0; padding: 1.2rem; display: grid; place-items: center; text-align: center; background: #f7f5f0; border-radius: .9rem; font-size: clamp(1.25rem,2.5vw,2rem); letter-spacing: -.035em; }
-.chips span { display: inline-flex; align-items: center; gap: .45rem; }
-.chips span button { border: 0; width: 1.45rem; height: 1.45rem; border-radius: 50%; background: #fbe5e1; color: #b83229; font-weight: 900; line-height: 1; }
-.questioncontent { grid-column: 2; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: .55rem; }
-.gamescreen .questioncontent h1 { grid-column: auto; }
-.questionimage { width: min(26rem,100%); max-height: 9.5rem; object-fit: cover; border-radius: .85rem; box-shadow: 0 .35rem 1rem #14203318; }
-.doublebadge { color: #8a4e00; background: #fff1c9; border: 1px solid #f1cd67; border-radius: 999px; padding: .35rem .65rem; font-size: .7rem; font-weight: 950; letter-spacing: .03em; }
-.riskbutton { grid-column: 3; border: 1px solid #d6d1c8; border-radius: .9rem; padding: .65rem .75rem; background: #f6f4ef; color: #353c47; text-align: left; max-width: 10.5rem; transition: .18s var(--ease); }
-.riskbutton b,.riskbutton small { display: block; }
-.riskbutton b { font-size: .78rem; }
-.riskbutton small { margin-top: .2rem; font-size: .58rem; color: var(--muted); line-height: 1.25; }
-.riskbutton.active { color: #fff; background: #e64d28; border-color: #e64d28; box-shadow: 0 .5rem 1.3rem #e64d2835; }
-.riskbutton.active small { color: #fff4ef; }
-.roundawards { width: min(24rem,100%); display: grid; gap: .45rem; margin-top: 1.2rem; }
-.roundawards span { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: .65rem .75rem; background: #ffffff10; border: 1px solid #ffffff20; border-radius: .7rem; font-size: .78rem; }
-.roundawards b { color: #ffb39f; }
+.librarylist article {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+.librarylist article.selected > button:first-child {
+  border-color: #f0522d;
+  background: #fff7f3;
+}
+.libactions {
+  display: grid;
+  grid-template-columns: repeat(3, 2rem);
+  gap: 0.22rem;
+}
+.libactions button {
+  border: 0;
+  border-radius: 0.55rem;
+  background: #121b2b;
+  color: #fff;
+  font-weight: 900;
+}
+.libactions button:last-child {
+  background: #fff0ed;
+  color: #bd3529;
+  border: 1px solid #f2cbc4;
+}
+.questionstrip > button[draggable="true"] {
+  cursor: grab;
+}
+.questionstrip > button[draggable="true"]:active {
+  cursor: grabbing;
+}
+.questioncanvas {
+  position: relative;
+}
+.previewtoggle {
+  position: absolute;
+  right: 1.1rem;
+  top: 2.35rem;
+  z-index: 2;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 0.4rem 0.65rem;
+  background: #fff;
+  color: var(--ink);
+  font-size: 0.7rem;
+  font-weight: 850;
+}
+.editorquestionimage {
+  display: block;
+  width: min(100%, 30rem);
+  height: 11rem;
+  object-fit: cover;
+  margin: 0 auto 0.75rem;
+  border-radius: 0.9rem;
+  background: #eee;
+}
+.previewprompt {
+  min-height: 8rem;
+  margin: 0;
+  padding: 1.2rem;
+  display: grid;
+  place-items: center;
+  text-align: center;
+  background: #f7f5f0;
+  border-radius: 0.9rem;
+  font-size: clamp(1.25rem, 2.5vw, 2rem);
+  letter-spacing: -0.035em;
+}
+.chips span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+.chips span button {
+  border: 0;
+  width: 1.45rem;
+  height: 1.45rem;
+  border-radius: 50%;
+  background: #fbe5e1;
+  color: #b83229;
+  font-weight: 900;
+  line-height: 1;
+}
+.questioncontent {
+  grid-column: 2;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.55rem;
+}
+.gamescreen .questioncontent h1 {
+  grid-column: auto;
+}
+.questionimage {
+  width: min(26rem, 100%);
+  max-height: 9.5rem;
+  object-fit: cover;
+  border-radius: 0.85rem;
+  box-shadow: 0 0.35rem 1rem #14203318;
+}
+.doublebadge {
+  color: #8a4e00;
+  background: #fff1c9;
+  border: 1px solid #f1cd67;
+  border-radius: 999px;
+  padding: 0.35rem 0.65rem;
+  font-size: 0.7rem;
+  font-weight: 950;
+  letter-spacing: 0.03em;
+}
+.riskbutton {
+  grid-column: 3;
+  border: 1px solid #d6d1c8;
+  border-radius: 0.9rem;
+  padding: 0.65rem 0.75rem;
+  background: #f6f4ef;
+  color: #353c47;
+  text-align: left;
+  max-width: 10.5rem;
+  transition: 0.18s var(--ease);
+}
+.riskbutton b,
+.riskbutton small {
+  display: block;
+}
+.riskbutton b {
+  font-size: 0.78rem;
+}
+.riskbutton small {
+  margin-top: 0.2rem;
+  font-size: 0.58rem;
+  color: var(--muted);
+  line-height: 1.25;
+}
+.riskbutton.active {
+  color: #fff;
+  background: #e64d28;
+  border-color: #e64d28;
+  box-shadow: 0 0.5rem 1.3rem #e64d2835;
+}
+.riskbutton.active small {
+  color: #fff4ef;
+}
+.roundawards {
+  width: min(24rem, 100%);
+  display: grid;
+  gap: 0.45rem;
+  margin-top: 1.2rem;
+}
+.roundawards span {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.65rem 0.75rem;
+  background: #ffffff10;
+  border: 1px solid #ffffff20;
+  border-radius: 0.7rem;
+  font-size: 0.78rem;
+}
+.roundawards b {
+  color: #ffb39f;
+}
 
 @media (max-width: 700px) {
-  .librarypane { grid-template-columns: 1fr; }
-  .librarypane > .panetitle,.quizsearch,.librarylist { grid-column: 1; }
-  .librarylist article { min-width: 13rem; }
-  .libactions { grid-template-columns: repeat(3,1.85rem); }
-  .previewtoggle { top: 2rem; right: .75rem; }
-  .editorquestionimage { height: 8rem; }
-  .gamescreen { grid-template-rows: auto .25rem minmax(10.5rem,39%) minmax(0,1fr); }
-  .gamescreen .questionarea { grid-template-columns: 3.5rem minmax(0,1fr); grid-template-rows: 1fr auto; align-content: center; }
-  .questioncontent { grid-column: 2; gap: .4rem; width: 100%; align-items: flex-start; }
-  .gamescreen .questioncontent h1 { text-align: left; font-size: clamp(1.18rem,5.8vw,1.7rem); }
-  .questionimage { width: min(100%,15rem); max-height: 5rem; border-radius: .65rem; }
-  .doublebadge { font-size: .58rem; padding: .28rem .5rem; }
-  .riskbutton { position: absolute; right: .55rem; bottom: .45rem; z-index: 3; max-width: 9.2rem; padding: .45rem .55rem; border-radius: .7rem; }
-  .riskbutton b { font-size: .68rem; }
-  .riskbutton small { display: none; }
-  .gamescreen .answer { min-height: 4.8rem; }
-  .roundawards { margin-top: .7rem; gap: .3rem; }
-  .roundawards span { padding: .45rem .55rem; font-size: .68rem; }
+  .librarypane {
+    grid-template-columns: 1fr;
+  }
+  .librarypane > .panetitle,
+  .quizsearch,
+  .librarylist {
+    grid-column: 1;
+  }
+  .librarylist article {
+    min-width: 13rem;
+  }
+  .libactions {
+    grid-template-columns: repeat(3, 1.85rem);
+  }
+  .previewtoggle {
+    top: 2rem;
+    right: 0.75rem;
+  }
+  .editorquestionimage {
+    height: 8rem;
+  }
+  .gamescreen {
+    grid-template-rows: auto 0.25rem minmax(10.5rem, 39%) minmax(0, 1fr);
+  }
+  .gamescreen .questionarea {
+    grid-template-columns: 3.5rem minmax(0, 1fr);
+    grid-template-rows: 1fr auto;
+    align-content: center;
+  }
+  .questioncontent {
+    grid-column: 2;
+    gap: 0.4rem;
+    width: 100%;
+    align-items: flex-start;
+  }
+  .gamescreen .questioncontent h1 {
+    text-align: left;
+    font-size: clamp(1.18rem, 5.8vw, 1.7rem);
+  }
+  .questionimage {
+    width: min(100%, 15rem);
+    max-height: 5rem;
+    border-radius: 0.65rem;
+  }
+  .doublebadge {
+    font-size: 0.58rem;
+    padding: 0.28rem 0.5rem;
+  }
+  .riskbutton {
+    position: absolute;
+    right: 0.55rem;
+    bottom: 0.45rem;
+    z-index: 3;
+    max-width: 9.2rem;
+    padding: 0.45rem 0.55rem;
+    border-radius: 0.7rem;
+  }
+  .riskbutton b {
+    font-size: 0.68rem;
+  }
+  .riskbutton small {
+    display: none;
+  }
+  .gamescreen .answer {
+    min-height: 4.8rem;
+  }
+  .roundawards {
+    margin-top: 0.7rem;
+    gap: 0.3rem;
+  }
+  .roundawards span {
+    padding: 0.45rem 0.55rem;
+    font-size: 0.68rem;
+  }
+}
+
+/* Sonuç kartı son katman: önceki ödül stillerini bilinçli olarak geçersiz kılar. */
+.roundawards {
+  width: min(31rem, 100%);
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.45rem;
+  margin-top: 1.2rem;
+}
+.roundawards > div > span {
+  display: block;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  font-size: 1.2rem;
+}
+@media (max-width: 760px) {
+  .roundawards {
+    margin-top: 0.75rem;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.35rem;
+  }
+  .roundawards > div > span {
+    padding: 0;
+    font-size: 0.9rem;
+  }
 }

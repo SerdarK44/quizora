@@ -984,45 +984,67 @@ function Countdown({ startedAt, seconds }: any) {
 }
 function RoundResults({ q, players, personal, onNext, message, awards }: any) {
   const me = personal ? players.find((p: any) => p.id === personal.id) : null;
+  const rank = me ? players.findIndex((p: any) => p.id === me.id) + 1 : 0;
+  const awardItems = [
+    awards?.fastest && { icon: "⚡", label: "En hızlı", name: awards.fastest },
+    awards?.biggestRise && {
+      icon: "↗",
+      label: "En çok yükselen",
+      name: awards.biggestRise,
+    },
+    awards?.lastSecond && {
+      icon: "⏱",
+      label: "Son saniye",
+      name: awards.lastSecond,
+    },
+  ].filter(Boolean) as any[];
   return (
     <main className="roundresults">
       <section className="correctanswer">
-        <span className="kicker">DOĞRU CEVAP</span>
-        <h1>{q?.options?.[q.correctIndex]}</h1>
+        <div className="answerreveal">
+          <span className="answercheck">✓</span>
+          <div>
+            <span className="kicker">DOĞRU CEVAP</span>
+            <h1>{q?.options?.[q.correctIndex]}</h1>
+          </div>
+        </div>
         {message && <div className="roundquip">⚡ {message}</div>}
-        {awards && (
+        {awardItems.length > 0 && (
           <div className="roundawards">
-            {awards.fastest && (
-              <span>
-                <b>⚡ En hızlı</b>
-                {awards.fastest}
-              </span>
-            )}
-            {awards.biggestRise && (
-              <span>
-                <b>↗ En büyük yükseliş</b>
-                {awards.biggestRise}
-              </span>
-            )}
-            {awards.lastSecond && (
-              <span>
-                <b>⏱ Son saniye</b>
-                {awards.lastSecond}
-              </span>
-            )}
+            {awardItems.map((award) => (
+              <div key={award.label}>
+                <span aria-hidden="true">{award.icon}</span>
+                <small>{award.label}</small>
+                <b>{award.name}</b>
+              </div>
+            ))}
           </div>
         )}
       </section>
       <section className="roundboard">
-        <span className="kicker">TUR SONU</span>
-        <h2>Liderlik tablosu</h2>
+        <div className="boardheading">
+          <div>
+            <span className="kicker">TUR SONU</span>
+            <h2>Liderlik tablosu</h2>
+          </div>
+          <span>{players.length} oyuncu</span>
+        </div>
         {me && (
           <div className="myround">
-            <span>
-              Senin sıran{" "}
-              <b>#{players.findIndex((p: any) => p.id === me.id) + 1}</b>
-            </span>
-            <strong>+{me.roundPoints} puan</strong>
+            <div>
+              <small>SENİN SIRAN</small>
+              <b>#{rank}</b>
+            </div>
+            <div>
+              <small>BU TUR</small>
+              <strong className={me.roundPoints < 0 ? "negative" : ""}>
+                {formatDelta(me.roundPoints)}
+              </strong>
+            </div>
+            <div>
+              <small>TOPLAM</small>
+              <strong>{me.score}</strong>
+            </div>
             {me.streak >= 2 && (
               <i>
                 🔥 {streakLabel(me.streak)} · {me.streak} seri
@@ -1044,7 +1066,9 @@ function RoundResults({ q, players, personal, onNext, message, awards }: any) {
               </span>
               <strong>
                 {p.score}
-                <small>+{p.roundPoints}</small>
+                <small className={p.roundPoints < 0 ? "negative" : ""}>
+                  {formatDelta(p.roundPoints)}
+                </small>
               </strong>
             </div>
           ))}
@@ -1059,6 +1083,10 @@ function RoundResults({ q, players, personal, onNext, message, awards }: any) {
       </section>
     </main>
   );
+}
+function formatDelta(points: number) {
+  const value = Number(points) || 0;
+  return value > 0 ? `+${value}` : String(value);
 }
 function streakLabel(streak: number) {
   if (streak >= 8) return "Volkan";
