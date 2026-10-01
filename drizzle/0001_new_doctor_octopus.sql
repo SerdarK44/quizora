@@ -1,0 +1,1 @@
+ALTER TABLE `questions` ADD `max_points` integer DEFAULT 1000 NOT NULL;

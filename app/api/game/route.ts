@@ -11,7 +11,7 @@ export async function GET(request:Request){
   const db=getRawDb(),u=new URL(request.url),roomCode=(u.searchParams.get("code")||"").replace(/\D/g,"");
   let room=await db.prepare("SELECT * FROM rooms WHERE code=?").bind(roomCode).first<Record<string,any>>();
   if(!room)return json({error:"Oda bulunamadı."},404);
-  const qs=(await db.prepare("SELECT id,position,prompt,options_json,seconds,correct_index FROM questions WHERE quiz_id=? ORDER BY position").bind(room.quiz_id).all<Record<string,any>>()).results;
+  const qs=(await db.prepare("SELECT id,position,prompt,options_json,seconds,max_points,correct_index FROM questions WHERE quiz_id=? ORDER BY position").bind(room.quiz_id).all<Record<string,any>>()).results;
   const qi=Number(room.current_question),q=qi>=0?qs[qi]:null;
   let answered=q?Number((await db.prepare("SELECT COUNT(*) n FROM answers WHERE room_id=? AND question_id=?").bind(room.id,q.id).first<Record<string,any>>())?.n||0):0;
   const playerCount=Number((await db.prepare("SELECT COUNT(*) n FROM players WHERE room_id=?").bind(room.id).first<Record<string,any>>())?.n||0);
@@ -40,7 +40,7 @@ export async function POST(request:Request){
    const title=String(p.title||"").trim(),items=Array.isArray(p.questions)?p.questions as any[]:[];
    if(!title||!items.length||items.some(q=>!String(q.prompt).trim()||!Array.isArray(q.options)||q.options.some((o:unknown)=>!String(o).trim())))return json({error:"Tüm soru ve seçenekleri doldur."},400);
    const quizId=id(),roomId=id(),hostToken=id(),roomCode=String(Math.floor(100000+Math.random()*900000)),now=Date.now();
-   await db.batch([db.prepare("INSERT INTO quizzes(id,title,created_at) VALUES(?,?,?)").bind(quizId,title,now),...items.map((q,i)=>db.prepare("INSERT INTO questions(id,quiz_id,position,prompt,options_json,correct_index,seconds) VALUES(?,?,?,?,?,?,?)").bind(id(),quizId,i,String(q.prompt).trim(),JSON.stringify(q.options),Number(q.correctIndex),Math.max(5,Math.min(120,Number(q.seconds)||20)))),db.prepare("INSERT INTO rooms(id,code,quiz_id,host_token,status,current_question,created_at) VALUES(?,?,?,?,?,?,?)").bind(roomId,roomCode,quizId,hostToken,"lobby",-1,now)]);
+   await db.batch([db.prepare("INSERT INTO quizzes(id,title,created_at) VALUES(?,?,?)").bind(quizId,title,now),...items.map((q,i)=>db.prepare("INSERT INTO questions(id,quiz_id,position,prompt,options_json,correct_index,seconds,max_points) VALUES(?,?,?,?,?,?,?,?)").bind(id(),quizId,i,String(q.prompt).trim(),JSON.stringify(q.options),Number(q.correctIndex),Math.max(5,Math.min(120,Number(q.seconds)||20)),Math.max(100,Math.min(5000,Number(q.points)||1000)))),db.prepare("INSERT INTO rooms(id,code,quiz_id,host_token,status,current_question,created_at) VALUES(?,?,?,?,?,?,?)").bind(roomId,roomCode,quizId,hostToken,"lobby",-1,now)]);
    return json({code:roomCode,hostToken},201);
   }
   const roomCode=String(p.code||"").replace(/\D/g,""),room=await db.prepare("SELECT * FROM rooms WHERE code=?").bind(roomCode).first<Record<string,any>>();
@@ -58,7 +58,7 @@ export async function POST(request:Request){
   if(action==="answer"){
    if(room.status!=="question")return json({error:"Cevap süresi kapandı."},409);const player=await db.prepare("SELECT * FROM players WHERE room_id=? AND token=?").bind(room.id,String(p.playerToken)).first<Record<string,any>>();if(!player)return json({error:"Oyuncu bulunamadı."},403);
    const q=await db.prepare("SELECT * FROM questions WHERE quiz_id=? AND position=?").bind(room.quiz_id,room.current_question).first<Record<string,any>>();if(!q||Date.now()>=Number(room.question_started_at)+Number(q.seconds)*1000)return json({error:"Süre doldu."},409);
-   const option=Number(p.optionIndex),correct=option===Number(q.correct_index),elapsed=Math.max(0,Date.now()-Number(room.question_started_at)),ratio=Math.max(0,1-elapsed/(Number(q.seconds)*1000)),points=correct?Math.round(500+500*ratio):0;
+   const option=Number(p.optionIndex),correct=option===Number(q.correct_index),elapsed=Math.max(0,Date.now()-Number(room.question_started_at)),ratio=Math.max(0,1-elapsed/(Number(q.seconds)*1000)),maxPoints=Number(q.max_points)||1000,points=correct?Math.round(maxPoints*(.5+.5*ratio)):0;
    try{await db.prepare("INSERT INTO answers(id,room_id,player_id,question_id,option_index,is_correct,points,answered_at) VALUES(?,?,?,?,?,?,?,?)").bind(id(),room.id,player.id,q.id,option,correct?1:0,points,Date.now()).run()}catch{return json({error:"Bu soruyu zaten cevapladın."},409)}
    return json({received:true});
   }
