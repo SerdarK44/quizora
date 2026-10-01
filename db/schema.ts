@@ -1,6 +1,84 @@
-import { integer, sqliteTable, text, uniqueIndex, index } from "drizzle-orm/sqlite-core";
-export const quizzes = sqliteTable("quizzes", { id:text("id").primaryKey(), title:text("title").notNull(), createdAt:integer("created_at").notNull() });
-export const questions = sqliteTable("questions", { id:text("id").primaryKey(), quizId:text("quiz_id").notNull().references(()=>quizzes.id), position:integer("position").notNull(), prompt:text("prompt").notNull(), optionsJson:text("options_json").notNull(), correctIndex:integer("correct_index").notNull(), seconds:integer("seconds").notNull().default(20), maxPoints:integer("max_points").notNull().default(1000) }, t=>[index("idx_questions_quiz_position").on(t.quizId,t.position)]);
-export const rooms = sqliteTable("rooms", { id:text("id").primaryKey(), code:text("code").notNull(), quizId:text("quiz_id").notNull().references(()=>quizzes.id), hostToken:text("host_token").notNull(), status:text("status").notNull().default("lobby"), currentQuestion:integer("current_question").notNull().default(-1), questionStartedAt:integer("question_started_at"), createdAt:integer("created_at").notNull() }, t=>[uniqueIndex("idx_rooms_code").on(t.code)]);
-export const players = sqliteTable("players", { id:text("id").primaryKey(), roomId:text("room_id").notNull().references(()=>rooms.id), name:text("name").notNull(), token:text("token").notNull(), score:integer("score").notNull().default(0), joinedAt:integer("joined_at").notNull() }, t=>[index("idx_players_room_score").on(t.roomId,t.score)]);
-export const answers = sqliteTable("answers", { id:text("id").primaryKey(), roomId:text("room_id").notNull().references(()=>rooms.id), playerId:text("player_id").notNull().references(()=>players.id), questionId:text("question_id").notNull().references(()=>questions.id), optionIndex:integer("option_index").notNull(), isCorrect:integer("is_correct",{mode:"boolean"}).notNull(), points:integer("points").notNull(), answeredAt:integer("answered_at").notNull() }, t=>[uniqueIndex("idx_answers_player_question").on(t.playerId,t.questionId),index("idx_answers_room_question").on(t.roomId,t.questionId)]);
+import {
+  integer,
+  sqliteTable,
+  text,
+  uniqueIndex,
+  index,
+} from "drizzle-orm/sqlite-core";
+export const quizzes = sqliteTable("quizzes", {
+  id: text("id").primaryKey(),
+  title: text("title").notNull(),
+  createdAt: integer("created_at").notNull(),
+});
+export const questions = sqliteTable(
+  "questions",
+  {
+    id: text("id").primaryKey(),
+    quizId: text("quiz_id")
+      .notNull()
+      .references(() => quizzes.id),
+    position: integer("position").notNull(),
+    prompt: text("prompt").notNull(),
+    optionsJson: text("options_json").notNull(),
+    correctIndex: integer("correct_index").notNull(),
+    seconds: integer("seconds").notNull().default(20),
+    maxPoints: integer("max_points").notNull().default(1000),
+    imageUrl: text("image_url"),
+  },
+  (t) => [index("idx_questions_quiz_position").on(t.quizId, t.position)],
+);
+export const rooms = sqliteTable(
+  "rooms",
+  {
+    id: text("id").primaryKey(),
+    code: text("code").notNull(),
+    quizId: text("quiz_id")
+      .notNull()
+      .references(() => quizzes.id),
+    hostToken: text("host_token").notNull(),
+    status: text("status").notNull().default("lobby"),
+    currentQuestion: integer("current_question").notNull().default(-1),
+    questionStartedAt: integer("question_started_at"),
+    doubleQuestion: integer("double_question").notNull().default(-1),
+    createdAt: integer("created_at").notNull(),
+  },
+  (t) => [uniqueIndex("idx_rooms_code").on(t.code)],
+);
+export const players = sqliteTable(
+  "players",
+  {
+    id: text("id").primaryKey(),
+    roomId: text("room_id")
+      .notNull()
+      .references(() => rooms.id),
+    name: text("name").notNull(),
+    token: text("token").notNull(),
+    score: integer("score").notNull().default(0),
+    joinedAt: integer("joined_at").notNull(),
+  },
+  (t) => [index("idx_players_room_score").on(t.roomId, t.score)],
+);
+export const answers = sqliteTable(
+  "answers",
+  {
+    id: text("id").primaryKey(),
+    roomId: text("room_id")
+      .notNull()
+      .references(() => rooms.id),
+    playerId: text("player_id")
+      .notNull()
+      .references(() => players.id),
+    questionId: text("question_id")
+      .notNull()
+      .references(() => questions.id),
+    optionIndex: integer("option_index").notNull(),
+    isCorrect: integer("is_correct", { mode: "boolean" }).notNull(),
+    risk: integer("risk", { mode: "boolean" }).notNull().default(false),
+    points: integer("points").notNull(),
+    answeredAt: integer("answered_at").notNull(),
+  },
+  (t) => [
+    uniqueIndex("idx_answers_player_question").on(t.playerId, t.questionId),
+    index("idx_answers_room_question").on(t.roomId, t.questionId),
+  ],
+);
