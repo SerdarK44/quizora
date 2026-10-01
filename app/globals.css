@@ -1143,6 +1143,180 @@ select:focus {
     font-size: 2.6rem;
   }
 }
+
+/* Mobil oyun v3 — kompakt soru kartı ve dokunması kolay cevap alanı */
+@media (max-width: 700px) {
+  .gamescreen {
+    grid-template-rows: 3.65rem 0.22rem minmax(11.5rem, 30%) minmax(0, 1fr);
+    background: #e9e7e1;
+  }
+  .playheader {
+    min-height: 3.65rem;
+    padding: 0.55rem 0.75rem;
+  }
+  .playheader > div:first-child {
+    gap: 0.4rem;
+  }
+  .questioncount {
+    font-size: 0.78rem;
+  }
+  .remaining {
+    padding: 0.28rem 0.45rem;
+    font-size: 0.6rem;
+  }
+  .playstatus b {
+    min-width: 2.15rem;
+    padding: 0.35rem 0.45rem;
+    border-radius: 0.5rem;
+  }
+  .gamescreen .questionarea {
+    display: block;
+    padding: 4.3rem 0.75rem 0.75rem;
+    background: #f5f3ee;
+  }
+  .gamescreen .questionarea .clock {
+    position: absolute;
+    left: 0.75rem;
+    top: 0.7rem;
+    width: 3.15rem;
+    height: 3.15rem;
+    border: 0;
+    border-radius: 0.8rem;
+    box-shadow: 0 0.3rem 0.8rem #1722341c;
+  }
+  .clock b {
+    font-size: 1.25rem;
+  }
+  .clock small {
+    font-size: 0.52rem;
+  }
+  .questioncontent {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.85rem 1rem;
+    background: #fff;
+    border: 1px solid #e2ded5;
+    border-radius: 1rem;
+    box-shadow: 0 0.45rem 1.2rem #1925380b;
+  }
+  .gamescreen .questioncontent h1 {
+    width: 100%;
+    text-align: center;
+    font-size: clamp(1.25rem, 5.8vw, 1.7rem);
+    font-weight: 850;
+    line-height: 1.16;
+    letter-spacing: -0.035em;
+  }
+  .questionimage {
+    max-width: 9rem;
+    max-height: 4rem;
+    align-self: center;
+  }
+  .doublebadge {
+    align-self: center;
+  }
+  .riskbutton {
+    top: 0.7rem;
+    right: 0.75rem;
+    bottom: auto;
+    min-width: 6.8rem;
+    max-width: 8rem;
+    min-height: 3.15rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 0.45rem 0.6rem;
+    border-color: #ddd7cc;
+    background: #fff;
+    box-shadow: 0 0.3rem 0.8rem #17223412;
+    text-align: center;
+  }
+  .riskbutton b {
+    font-size: 0.66rem;
+  }
+  .gamescreen .answers {
+    padding: 0.55rem max(0.5rem, env(safe-area-inset-left))
+      max(0.55rem, env(safe-area-inset-bottom));
+    gap: 0.45rem;
+    background: #e9e7e1;
+  }
+  .gamescreen .answer {
+    min-height: 0;
+    grid-template-columns: 2.35rem minmax(0, 1fr);
+    align-content: center;
+    padding: 0.75rem;
+    gap: 0.6rem;
+    border-radius: 1rem;
+    box-shadow:
+      inset 0 -0.22rem #00000020,
+      0 0.3rem 0.7rem #17223416;
+  }
+  .gamescreen .answer span {
+    width: 2.2rem;
+    height: 2.2rem;
+    border-radius: 0.62rem;
+    font-size: 0.82rem;
+  }
+  .gamescreen .answer strong {
+    font-size: clamp(0.92rem, 4.2vw, 1.08rem);
+    line-height: 1.18;
+  }
+  .gamescreen .answer:active:not(:disabled) {
+    transform: scale(0.97);
+  }
+  .gamescreen .c0 {
+    --c: #df3f4b;
+  }
+  .gamescreen .c1 {
+    --c: #176ead;
+  }
+  .gamescreen .c2 {
+    --c: #9c6208;
+  }
+  .gamescreen .c3 {
+    --c: #0d795a;
+  }
+}
+@media (max-width: 370px), (max-height: 640px) {
+  .gamescreen {
+    grid-template-rows: 3.4rem 0.2rem minmax(10rem, 28%) minmax(0, 1fr);
+  }
+  .playheader {
+    min-height: 3.4rem;
+  }
+  .gamescreen .questionarea {
+    padding: 3.75rem 0.55rem 0.55rem;
+  }
+  .gamescreen .questionarea .clock {
+    left: 0.55rem;
+    top: 0.5rem;
+    width: 2.85rem;
+    height: 2.85rem;
+  }
+  .riskbutton {
+    right: 0.55rem;
+    top: 0.5rem;
+    min-height: 2.85rem;
+  }
+  .questioncontent {
+    padding: 0.65rem 0.75rem;
+  }
+  .gamescreen .questioncontent h1 {
+    font-size: 1.15rem;
+  }
+  .gamescreen .answers {
+    gap: 0.35rem;
+    padding: 0.4rem;
+  }
+  .gamescreen .answer {
+    border-radius: 0.8rem;
+    padding: 0.55rem;
+  }
+}
 @media (prefers-reduced-motion: reduce) {
   *,
   *:before,
@@ -3110,5 +3284,179 @@ select:focus {
   .roundawards > div > span {
     padding: 0;
     font-size: 0.9rem;
+  }
+}
+
+/* Mobil oyun son katman */
+@media (max-width: 700px) {
+  .gamescreen {
+    grid-template-rows: 3.65rem 0.22rem minmax(11.5rem, 30%) minmax(0, 1fr);
+    background: #e9e7e1;
+  }
+  .playheader {
+    min-height: 3.65rem;
+    padding: 0.55rem 0.75rem;
+  }
+  .playheader > div:first-child {
+    gap: 0.4rem;
+  }
+  .questioncount {
+    font-size: 0.78rem;
+  }
+  .remaining {
+    padding: 0.28rem 0.45rem;
+    font-size: 0.6rem;
+  }
+  .playstatus b {
+    min-width: 2.15rem;
+    padding: 0.35rem 0.45rem;
+    border-radius: 0.5rem;
+  }
+  .gamescreen .questionarea {
+    display: block;
+    padding: 4.3rem 0.75rem 0.75rem;
+    background: #f5f3ee;
+  }
+  .gamescreen .questionarea .clock {
+    position: absolute;
+    left: 0.75rem;
+    top: 0.7rem;
+    width: 3.15rem;
+    height: 3.15rem;
+    border: 0;
+    border-radius: 0.8rem;
+    box-shadow: 0 0.3rem 0.8rem #1722341c;
+  }
+  .clock b {
+    font-size: 1.25rem;
+  }
+  .clock small {
+    font-size: 0.52rem;
+  }
+  .questioncontent {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.85rem 1rem;
+    background: #fff;
+    border: 1px solid #e2ded5;
+    border-radius: 1rem;
+    box-shadow: 0 0.45rem 1.2rem #1925380b;
+  }
+  .gamescreen .questioncontent h1 {
+    width: 100%;
+    text-align: center;
+    font-size: clamp(1.25rem, 5.8vw, 1.7rem);
+    font-weight: 850;
+    line-height: 1.16;
+    letter-spacing: -0.035em;
+  }
+  .questionimage {
+    max-width: 9rem;
+    max-height: 4rem;
+    align-self: center;
+  }
+  .doublebadge {
+    align-self: center;
+  }
+  .riskbutton {
+    top: 0.7rem;
+    right: 0.75rem;
+    bottom: auto;
+    min-width: 6.8rem;
+    max-width: 8rem;
+    min-height: 3.15rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 0.45rem 0.6rem;
+    border-color: #ddd7cc;
+    background: #fff;
+    box-shadow: 0 0.3rem 0.8rem #17223412;
+    text-align: center;
+  }
+  .riskbutton b {
+    font-size: 0.66rem;
+  }
+  .gamescreen .answers {
+    padding: 0.55rem max(0.5rem, env(safe-area-inset-left))
+      max(0.55rem, env(safe-area-inset-bottom));
+    gap: 0.45rem;
+    background: #e9e7e1;
+  }
+  .gamescreen .answer {
+    min-height: 0;
+    grid-template-columns: 2.35rem minmax(0, 1fr);
+    align-content: center;
+    padding: 0.75rem;
+    gap: 0.6rem;
+    border-radius: 1rem;
+    box-shadow:
+      inset 0 -0.22rem #00000020,
+      0 0.3rem 0.7rem #17223416;
+  }
+  .gamescreen .answer span {
+    width: 2.2rem;
+    height: 2.2rem;
+    border-radius: 0.62rem;
+    font-size: 0.82rem;
+  }
+  .gamescreen .answer strong {
+    font-size: clamp(0.92rem, 4.2vw, 1.08rem);
+    line-height: 1.18;
+  }
+  .gamescreen .answer:active:not(:disabled) {
+    transform: scale(0.97);
+  }
+  .gamescreen .c0 {
+    --c: #df3f4b;
+  }
+  .gamescreen .c1 {
+    --c: #176ead;
+  }
+  .gamescreen .c2 {
+    --c: #9c6208;
+  }
+  .gamescreen .c3 {
+    --c: #0d795a;
+  }
+}
+@media (max-width: 370px), (max-height: 640px) {
+  .gamescreen {
+    grid-template-rows: 3.4rem 0.2rem minmax(10rem, 28%) minmax(0, 1fr);
+  }
+  .playheader {
+    min-height: 3.4rem;
+  }
+  .gamescreen .questionarea {
+    padding: 3.75rem 0.55rem 0.55rem;
+  }
+  .gamescreen .questionarea .clock {
+    left: 0.55rem;
+    top: 0.5rem;
+    width: 2.85rem;
+    height: 2.85rem;
+  }
+  .riskbutton {
+    right: 0.55rem;
+    top: 0.5rem;
+    min-height: 2.85rem;
+  }
+  .questioncontent {
+    padding: 0.65rem 0.75rem;
+  }
+  .gamescreen .questioncontent h1 {
+    font-size: 1.15rem;
+  }
+  .gamescreen .answers {
+    gap: 0.35rem;
+    padding: 0.4rem;
+  }
+  .gamescreen .answer {
+    border-radius: 0.8rem;
+    padding: 0.55rem;
   }
 }
