@@ -18,10 +18,19 @@ export async function GET(request:Request){
   if(room.status==="question"&&q&&(answered>=playerCount&&playerCount>0||Date.now()>=Number(room.question_started_at)+Number(q.seconds)*1000)){
     await finishRound(db,room,q);room={...room,status:"results"};
   }
-  const players=(await db.prepare("SELECT id,name,score FROM players WHERE room_id=? ORDER BY score DESC,joined_at ASC").bind(room.id).all<Record<string,any>>()).results;
+  const basePlayers=(await db.prepare("SELECT id,name,score FROM players WHERE room_id=? ORDER BY score DESC,joined_at ASC").bind(room.id).all<Record<string,any>>()).results;
+  const answerRows=(await db.prepare("SELECT a.player_id,a.points,a.is_correct,q.position FROM answers a JOIN questions q ON q.id=a.question_id WHERE a.room_id=? ORDER BY q.position").bind(room.id).all<Record<string,any>>()).results;
+  const playerStats=new Map<string,{streak:number;roundPoints:number}>();
+  for(const p of basePlayers)playerStats.set(p.id,{streak:0,roundPoints:0});
+  for(const a of answerRows){const s=playerStats.get(a.player_id);if(!s)continue;s.streak=a.is_correct?s.streak+1:0;if(Number(a.position)===qi)s.roundPoints=Number(a.points)}
+  const players=basePlayers.map(p=>({...p,...playerStats.get(p.id)}));
+  const roundWinner=room.status==="results"?[...players].sort((a,b)=>b.roundPoints-a.roundPoints)[0]:null;
+  const quips=["alev aldı!","roket gibi gidiyor!","cevapları kahvaltıda yemiş!","klavyeye sihir yaptı!","bu turu cebine koydu!","bilgi motorunu çalıştırdı!"];
+  const roundMessage=roundWinner&&roundWinner.roundPoints>0?`${roundWinner.name} ${quips[(qi+roundWinner.name.length)%quips.length]}`:null;
   const token=u.searchParams.get("playerToken"),host=u.searchParams.get("hostToken")===room.host_token;let player=null,hasAnswered=false;
   if(token){player=await db.prepare("SELECT id,name,score FROM players WHERE room_id=? AND token=?").bind(room.id,token).first<Record<string,any>>();if(player&&q)hasAnswered=!!(await db.prepare("SELECT 1 FROM answers WHERE player_id=? AND question_id=?").bind(player.id,q.id).first())}
-  return json({room:{code:room.code,status:room.status,currentQuestion:qi,questionStartedAt:room.question_started_at,totalQuestions:qs.length},question:q?{id:q.id,prompt:q.prompt,options:JSON.parse(q.options_json),seconds:q.seconds,...(room.status==="results"||room.status==="finished"||host?{correctIndex:q.correct_index}:{})}:null,players,player:player?{...player,score:room.status==="question"?null:player.score}:null,hasAnswered,answered,isHost:host});
+  const enrichedPlayer=player?players.find(p=>p.id===player.id):null;
+  return json({room:{code:room.code,status:room.status,currentQuestion:qi,questionStartedAt:room.question_started_at,totalQuestions:qs.length},question:q?{id:q.id,prompt:q.prompt,options:JSON.parse(q.options_json),seconds:q.seconds,...(room.status==="results"||room.status==="finished"||host?{correctIndex:q.correct_index}:{})}:null,players,player:enrichedPlayer?{...enrichedPlayer,score:room.status==="question"?null:enrichedPlayer.score}:null,hasAnswered,answered,isHost:host,roundMessage});
  }catch(e){console.error(e);return json({error:"Oyun verileri yüklenemedi."},500)}
 }
 export async function POST(request:Request){
