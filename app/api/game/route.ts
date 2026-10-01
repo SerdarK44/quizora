@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { getRawDb } from "../../../db";
 const json = (data: unknown, status = 200) => Response.json(data, { status });
 const id = () => crypto.randomUUID();
@@ -7,6 +8,27 @@ const isAdmin = (r: Request) =>
   (r.headers.get("cookie") || "")
     .split(";")
     .some((x) => x.trim() === `quizora_admin=${ADMIN_SESSION}`);
+function safeParseOptions(jsonStr: string): string[] {
+  try {
+    const parsed = JSON.parse(jsonStr);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return ["A", "B", "C", "D"];
+  }
+}
+
+async function generateUniqueRoomCode(db: D1Database): Promise<string> {
+  for (let attempt = 0; attempt < 10; attempt++) {
+    const code = String(Math.floor(100000 + Math.random() * 900000));
+    const existing = await db
+      .prepare("SELECT 1 FROM rooms WHERE code=?")
+      .bind(code)
+      .first();
+    if (!existing) return code;
+  }
+  return String(Math.floor(1000000 + Math.random() * 9000000));
+}
+
 async function readBody(r: Request) {
   try {
     return (await r.json()) as Record<string, unknown>;
@@ -49,7 +71,7 @@ export async function GET(request: Request) {
     ).results;
     const qi = Number(room.current_question),
       q = qi >= 0 ? qs[qi] : null;
-    let answered = q
+    const answered = q
       ? Number(
           (
             await db
@@ -72,6 +94,7 @@ export async function GET(request: Request) {
     if (
       room.status === "question" &&
       q &&
+      Date.now() >= Number(room.question_started_at) &&
       ((answered >= playerCount && playerCount > 0) ||
         Date.now() >=
           Number(room.question_started_at) + Number(q.seconds) * 1000)
@@ -129,17 +152,60 @@ export async function GET(request: Request) {
             .sort((a, b) => b.rise - a.rise)[0]
         : null;
     const quips = [
-      "alev aldı!",
-      "roket gibi gidiyor!",
-      "cevapları kahvaltıda yemiş!",
-      "klavyeye sihir yaptı!",
-      "bu turu cebine koydu!",
-      "bilgi motorunu çalıştırdı!",
+      "{user} soruları kahvaltıda yemiş, afiyet olsun! 🥐",
+      "{user} Google'ı arama motoru değil, arka bahçesi yapmış! 🔍",
+      "{user} bu hızla giderse birazdan ışık hızını aşacak! ⚡",
+      "{user} Matrix'ten kaçmış, soruları daha ekrana düşmeden yakaladı! 🕶️",
+      "{user} parmaklarını NASA laboratuvarında mı taktırdın bu ne çeviklik! 🚀",
+      "{user} soru bitmeden cevabı yapıştırdı, geleceği görüyor herhalde! 🔮",
+      "{user} yürüyen kütüphane gibi maşallah, nazar değmesin! 🧿",
+      "{user} cevabı işaretlerken telefonun ekranı alev aldı! 🔥",
+      "{user} sorulara hiç acımadı, resmen tek tek avladı! 🎯",
+      "{user} bu turda adeta kendi şovunu yaptı, alkışlar! 👏",
+      "{user} için bu sorular soru değil, çerez niyetine gidiyor! 🥜",
+      "{user} beyin gücünü %100'e çekmiş, durdurabilene aşk olsun! 🧠",
+      "{user} cevabı öyle bir bildi ki şıklar bile saygı duruşuna geçti! 🫡",
+      "{user} turbo motoru açtı, arkasında sadece toz bıraktı! 🏎️",
+      "{user} yarışmaya değil, rekor kırmaya gelmiş gibi duruyor! 🏆",
+      "{user} soruları görünce gözlerinden lazer fışkırıyor! 👀⚡",
+      "{user} bu turu tereyağından kıl çeker gibi aldı götürdü! 🧈",
+      "{user} klavyede öyle bir kaydı ki rakipler yetişemedi! 🏄",
+      "{user} sorularla adeta tango yaptı, kusursuz performans! 💃",
+      "{user} bilgi denizinde yüzmüyor, direkt denizaltıyla geziyor! 🚢",
+      "{user} bu hızla fiber internete bile kafa tutar! 🌐",
+      "{user} soruyu okumadı, soruyu kalbinde hissetti resmen! 🧘",
+      "{user} bu turda rakipleri sol şeritten selektör yakarak geçti! 🚗💨",
+      "{user} soruların şifresini çözmüş, gizli ajan mısın be mübarek! 🕵️",
+      "{user} adeta ayaklı Wikipedia, güncelleme bile almıyor! 📚",
+      "{user} cevap butonunu çökertti, o nasıl bir tıklamaydı öyle! 💥",
+      "{user} bu turda yer çekimine bile meydan okudu! 🌌",
+      "{user} sanki soruları dün gece kendisi hazırlamış gibi rahat! ☕",
+      "{user} bilgi patlaması yaşattı, ortalık duman altı! 💣",
+      "{user} cevabı bilmekle kalmadı, diğer şıkları da utandırdı! 😎",
+      "{user} öyle bir bastı ki parmak izi ekranda kaldı! 📱",
+      "{user} bu soruda rakip tanımadı, tahtına kuruldu! 👑",
+      "{user} için bu soru çocuk oyuncağı kaldı, sıradaki gelsin diyor! 🍭",
+      "{user} Formula 1 pilotu gibi virajı en önde döndü! 🏁",
+      "{user} zekasıyla odanın aydınlatmasını ikiye katladı! 💡",
+      "{user} doğru cevabı kokusundan tanıdı, helal olsun! 👃🎯",
+      "{user} turu cebe indirdi, ıslık çalarak bekliyor! 🎶",
+      "{user} soruya öyle bir vurdu ki şıklar dağıldı! 🥊",
+      "{user} süper kahraman pelerinini takmış, soruları kurtarıyor! 🦸",
+      "{user} bir tıkla dünyayı kurtaracak potansiyelde, hızına yetişilmiyor! 🌍",
     ];
-    const roundMessage =
-      roundWinner && roundWinner.roundPoints > 0
-        ? `${roundWinner.name} ${quips[(qi + roundWinner.name.length) % quips.length]}`
-        : null;
+    let roundMessage: string | null = null;
+    if (roundWinner && roundWinner.roundPoints > 0) {
+      const seed = Math.abs(
+        qi * 7 +
+          roundWinner.name.length * 13 +
+          (roundWinner.name.charCodeAt(0) || 0) * 3,
+      );
+      const template = quips[seed % quips.length];
+      roundMessage = template.replace("{user}", roundWinner.name);
+    } else if (room.status === "results" && players.length > 0) {
+      roundMessage =
+        "Bu soru herkesi biraz terletti galiba, sıradaki soruda telafi zamanı! 😅";
+    }
     const currentCorrect = answerRows
         .filter((a) => Number(a.position) === qi && a.is_correct)
         .sort((a, b) => a.answered_at - b.answered_at),
@@ -183,6 +249,7 @@ export async function GET(request: Request) {
       ? players.find((p) => p.id === player.id)
       : null;
     return json({
+      serverTime: Date.now(),
       room: {
         code: room.code,
         status: room.status,
@@ -196,7 +263,7 @@ export async function GET(request: Request) {
         ? {
             id: q.id,
             prompt: q.prompt,
-            options: JSON.parse(q.options_json),
+            options: safeParseOptions(q.options_json),
             seconds: q.seconds,
             imageUrl: q.image_url || "",
             ...(room.status === "results" || room.status === "finished" || host
@@ -247,7 +314,7 @@ export async function POST(request: Request) {
       const quizId = id(),
         roomId = id(),
         hostToken = id(),
-        roomCode = String(Math.floor(100000 + Math.random() * 900000)),
+        roomCode = await generateUniqueRoomCode(db),
         now = Date.now();
       await db.batch([
         db
@@ -300,9 +367,11 @@ export async function POST(request: Request) {
       if (room.status !== "lobby")
         return json({ error: "Bu oyun başlamış." }, 409);
       const name = String(p.name || "")
+        .replace(/[<>&"']/g, "")
+        .replace(/\s+/g, " ")
         .trim()
         .slice(0, 24);
-      if (!name) return json({ error: "Bir isim yaz." }, 400);
+      if (!name) return json({ error: "Lütfen geçerli bir isim yazın." }, 400);
       const token = id();
       await db
         .prepare(
@@ -316,6 +385,8 @@ export async function POST(request: Request) {
       if (String(p.hostToken) !== room.host_token)
         return json({ error: "Yetkisiz işlem." }, 403);
       if (room.status === "question") {
+        if (Date.now() < Number(room.question_started_at))
+          return json({ error: "Soru henüz başlamadı." }, 400);
         const q = await db
           .prepare("SELECT id FROM questions WHERE quiz_id=? AND position=?")
           .bind(room.quiz_id, room.current_question)
@@ -342,7 +413,7 @@ export async function POST(request: Request) {
           .prepare(
             "UPDATE rooms SET status='question',current_question=?,question_started_at=? WHERE id=?",
           )
-          .bind(next, Date.now(), room.id)
+          .bind(next, Date.now() + 3300, room.id)
           .run();
       return json({ ok: true });
     }
@@ -370,14 +441,28 @@ export async function POST(request: Request) {
         .prepare("SELECT * FROM questions WHERE quiz_id=? AND position=?")
         .bind(room.quiz_id, room.current_question)
         .first<Record<string, any>>();
+      const option = parseInt(String(p.optionIndex), 10);
+      if (isNaN(option) || option < 0 || option > 3) {
+        return json({ error: "Geçersiz seçenek." }, 400);
+      }
+      const now = Date.now();
+      const questionStart = Number(room.question_started_at);
+      const questionDuration = Number(q?.seconds || 20) * 1000;
       if (
         !q ||
-        Date.now() >=
-          Number(room.question_started_at) + Number(q.seconds) * 1000
+        now < questionStart - 250 ||
+        now >= questionStart + questionDuration + 1200
       )
-        return json({ error: "Süre doldu." }, 409);
-      const option = Number(p.optionIndex),
-        correct = option === Number(q.correct_index),
+        return json(
+          {
+            error:
+              now < questionStart - 250
+                ? "Soru henüz başlamadı."
+                : "Süre doldu.",
+          },
+          409,
+        );
+      const correct = option === Number(q.correct_index),
         risk = !!room.risk_enabled && !!p.risk,
         elapsed = Math.max(0, Date.now() - Number(room.question_started_at)),
         ratio = Math.max(0, 1 - elapsed / (Number(q.seconds) * 1000)),

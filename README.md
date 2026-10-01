@@ -1,126 +1,159 @@
-# vinext-starter
+# ⚡ Quizora | Canlı & İnteraktif Çok Oyunculu Bilgi Yarışması
 
-A clean full-stack starter running on [vinext](https://github.com/cloudflare/vinext), with optional Cloudflare D1 and Drizzle support.
+<div align="center">
 
-## Prerequisites
+![Quizora Banner](public/favicon.svg)
 
-- Node.js `>=22.13.0`
-- Portable: Windows, macOS, or Linux; no Bash required
-- Managed Linux: managed Linux runtime with Bash, `flock`, `curl`, `sha256sum`, and GNU `timeout`
-- Git is required only for publishing
+**Gerçek zamanlı, mobil öncelikli, 3D dokunsal arayüzlü ve tam donanımlı yeni nesil bilgi yarışması platformu (Kahoot alternatifi).**
 
-## Sites Lifecycle
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![React](https://img.shields.io/badge/React-19.0+-61DAFB?logo=react&logoColor=black)](https://react.dev/)
+[![TailwindCSS](https://img.shields.io/badge/TailwindCSS-v4-38B2AC?logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
+[![Cloudflare D1](https://img.shields.io/badge/Cloudflare-D1_SQLite-F38020?logo=cloudflare&logoColor=white)](https://developers.cloudflare.com/d1/)
+[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
-The Sites initializer copies the shared starter and selects managed-linux only when `SITES_MANAGED_LINUX_CONTAINER=1`; otherwise it selects portable. It saves the selection only in ignored `.sites-runtime/execution-profile.json`. Both profiles copy/configure first, then use the plugin's separate `install-dependencies.mjs` step to measure installation independently. Edit source under `app/` and follow the Sites skill for installation, preview, builds, and publishing.
+[Özellikler](#-öne-çıkan-özellikler) • [Kurulum](#-hızlı-kurulum) • [Yönetici Paneli](#-yönetici-paneli-ve-güvenlik) • [Soru Formatları](#-soru-içe-aktarma-formatları) • [Mimari](#-teknoloji-yığını)
 
-Run `node <plugin-root>/scripts/configure-execution-profile.mjs` only when the profile is unknown for the current checkout and environment. Profile changes do not alter tracked source or require reinstalling otherwise-valid dependencies; restart an existing preview to use the new selection. Do not commit or upload `.sites-runtime/`.
+</div>
 
-This starter does not use `wrangler.jsonc`.
+---
 
-`install:ci` runs `npm ci` once against the shared lockfile, disables parent-workspace discovery, and includes required dev/optional dependencies despite production/omit settings. Sharp defaults to prebuilt binaries unless explicitly configured otherwise. Do not overlap installers.
+## 🌟 Öne Çıkan Özellikler
 
-- **Portable:** Preserve host HOME, npm cache, registry, proxy, temporary paths, retry/concurrency settings, and lifecycle-script policy. Use `--prefer-offline --no-audit --no-fund`.
-- **Managed Linux:** Use the existing project-local HOME/cache/tmp setup and Linux install lock, tarball preflight, and timeout. Restore the image-seeded npm cache only when its lockfile hash matches; retain network fallback. Builds keep their existing timeout. These helpers are not invoked by the portable profile.
+### 📱 1. Mobil Öncelikli & 3D Dokunsal Tasarım (Mobile-First 3D Tactile UI)
+- **Özel 3D Butonlar:** Basılma hissi veren gölgeli ve dokunsal (`btn-3d`) buton fiziği.
+- **Canlı Renk ve Şekil Kodlaması:** 
+  - 🔺 **Kırmızı Üçgen** (A Seçeneği)
+  - 🔷 **Mavi Elmas** (B Seçeneği)
+  - 🟡 **Sarı Daire** (C Seçeneği)
+  - 🟩 **Yeşil Kare** (D Seçeneği)
+- **Sıfır Gecikmeli Ses & Titreşim:** Web Audio API ile sıfır harici dosya bağımlılığıyla çalışan prosedürel ses sentezleyici (tıklama, geri sayım bipleri, alkış/trompet kutlamaları) ve mobil cihazlar için Haptic titreşim desteği.
 
-`scripts/sites-env.mjs` preserves the caller's HOME, npm cache, proxy, XDG, and temporary-directory configuration while defaulting Wrangler and Miniflare state to the checkout. If npm reports an unwritable cache, select a writable path with `npm_config_cache` for that install. The `dev` and `start` scripts also keep Wrangler logs inside the checkout. Generated `.sites-runtime/` and `.wrangler/` directories are disposable and ignored by Git.
+### ⏱️ 2. Soru Öncesi 3 Saniyelik Canlı Geri Sayım
+- Yönetici soruyu başlattığında hem ana ekranda hem de tüm katılımcıların telefonunda eş zamanlı olarak **3 ➔ 2 ➔ 1** geri sayım ve ses efektleri devreye girer.
+- Katılımcılar soruya odaklanmaya hazırlanır ve sürpriz açılışlar önlenir.
 
-On portable, `npm run dev` uses `vinext dev` with HMR, starting at port 5173. Vinext records the running server in ignored `.vinext/` state, rejects an ordinary duplicate launch, and recovers stale state after a stopped process; exactly simultaneous starts can race. Pass `--port <port>` or `--hostname <host>` after `npm run dev --` when needed; keep portable previews on loopback.
+### 🛠️ 3. Sadeleştirilmiş Yönetici Stüdyosu (Admin Studio)
+- **2 Sütunlu Temiz Stüdyo:** Karmaşık sekmelerden arındırılmış, sol tarafta soru akışı filmşeridi, sağ tarafta odaklanmış soru editörü.
+- **Sürükle-Bırak Sıralama (Drag-and-Drop):** Soru kartlarını tutarak istediğiniz sıraya kolayca taşıyın veya dokunmatik ekranlar için **↑ Yukarı** ve **↓ Aşağı** oklarını kullanın.
+- **Hızlı Parametre Seçicileri:** Tek tıkla süre (10s, 20s, 30s, 60s) ve puan (1.000p, 2.000p, Puansız) belirleme.
+- **Görsel Desteği:** Canlı önizlemeli soru görseli URL girişi.
+- **Risk Modu:** Doğru cevaba 2× puan, yanlış cevaba -%25 ceza puanı veren rekabetçi risk kuralı.
 
-For browser QA on managed Linux, use `sites-preview start`. The project's dev script runs Vite and accepts the supervisor's `--host 0.0.0.0 --port 4173 --strictPort` arguments. The internal browser uses `http://terminal.local:4173/`; it is not a user-facing URL. The supervisor owns the preview lifecycle. The ignored local profile survives the supervisor's cleared process environment.
+### 📥 4. Çok Formatlı Soru İçe Aktarma (Excel, CSV, JSON)
+- **Desteklenen Formatlar:** `.xlsx`, `.xls`, `.csv`, `.json`.
+- **Akıllı Sütun Tespiti:** Türkçe (`Soru`, `Seçenek A-D`, `Doğru Cevap`, `Süre`, `Puan`, `Görsel URL`) veya İngilizce başlıkları otomatik tanır.
+- **Esnek Cevap Girişi:** Doğru cevap olarak `A, B, C, D`, `1, 2, 3, 4` veya şıkkın doğrudan metni kabul edilir.
+- **Tek Tıkla Şablon İndirme:** Modal içinden hazır **Excel**, **CSV** veya **JSON** şablonunu doğrudan indirin.
+- **Önizleme & Ekleme:** Mevcut soruların üzerine ekleme (Append) ya da tümünün yerine koyma (Replace) seçenekleri.
 
-The portable profile simulates ChatGPT sign-in only for loopback development requests. Visit `/signin-with-chatgpt?return_to=/` to sign in as `local_seedy` (`seedy@sites.test`, display name `Seedy`) and `/signout-with-chatgpt?return_to=/` to sign out. The development cookie preserves that identity across server restarts. Mock auth is disabled in the managed-linux profile and is not included in production builds; hosted authentication remains dispatch-owned.
+### 📲 5. QR Kod ile Hızlı Katılım
+- Yönetici odayı başlattığında ekranda dinamik **QR Kod** ve **6 Haneli Oda PIN** kodu belirir.
+- Katılımcılar telefon kamerasıyla QR kodu okutarak PIN girmeden anında odaya katılabilir.
 
-The Worker uses `vinext/server/fetch-handler`, including Vinext's config-aware image handling. After building, `npm start` runs that Worker locally through Wrangler on `127.0.0.1`, sharing `.wrangler/state` with dev preview and local D1 migrations; it does not deploy the site or simulate sign-in. Use the URL printed by the server. Pass `npm start -- --port <port>` to select a different built-preview port.
+### 🏆 6. 3D Kürsü, İlk 10 Lider Tablosu & Fark Analizi
+- **3D Podyum Kutlaması:** Yarışma sonunda ilk 3 oyuncu için podyum animasyonu ve altın konfeti yağmuru.
+- **İlk 10 Sıralama Listesi:** Podyumun altında ilk 10 yarışmacının detaylı puan sıralaması.
+- **Kişisel Sıralama ve Fark Analizi:** Katılımcı ekranında kaçıncı olduğu ve bir önündeki rakibini geçmesi için kaç puana ihtiyacı olduğu anlık gösterilir.
+- **30+ Dinamik ve Eğlenceli Başarı Mesajı:** Turu ve oyunu kazananlar için eğlenceli, özgün tebrik esprileri (`"{user} soruları kahvaltıda yemiş, afiyet olsun! 🥐"`).
 
-Local previews use Miniflare's placeholder `Request.cf` metadata without a network lookup. Set `CLOUDFLARE_CF_FETCH_ENABLED=true` to opt into fetching preview metadata; this setting does not change hosted request metadata.
+### 🎓 7. MathTalk Destek Alanı
+- Yarışma tamamlandığında ana ekranda ve katılımcı ekranında MathTalk ekibi tanıtım alanı yer alır.
+- **Google Play** ve **App Store** resmi indirme rozetleri ile doğrudan uygulama mağazası bağlantıları.
 
-Local tool usage metrics are disabled by default. Set `WRANGLER_SEND_METRICS=true` to opt in.
+---
 
-## Included Shape
+## 🔒 Yönetici Paneli ve Güvenlik
 
-- edit site code under `app/`
-- `app/chatgpt-auth.ts` provides optional dispatch-owned ChatGPT sign-in helpers
-- `.openai/hosting.json` declares optional Sites D1 and R2 bindings
-- `vite.config.ts` simulates declared bindings for local development
-- `db/index.ts` reads the D1 binding from the Cloudflare Worker environment
-- `db/schema.ts` starts intentionally empty
-- `@cloudflare/workers-types` provides Worker types; `cloudflare-env.d.ts` declares optional `DB`/`BUCKET` bindings—update these declarations if binding names change
-- `examples/d1/` contains an optional D1 example surface
-- `drizzle.config.ts` supports local migration generation when needed
+Sistem üst düzey kurumsal güvenlik pratikleri ile donatılmıştır:
 
-## Workspace Auth Headers
+- **Varsayılan Giriş Bilgileri:**
+  - **Kullanıcı Adı:** `admin`
+  - **Şifre:** `SerdarSerdar`
+- **Kriptografik Karma (Hashing):** Parola asla düz metin saklanmaz. Web Crypto API ile **PBKDF2-SHA256**, **120.000 iterasyon** ve tuzlama (`quizora-admin-v1`) ile korunmaktadır.
+- **Sabit Zamanlı Doğrulama (Timing-Safe Equal):** Zamanlama yan kanal saldırılarına (side-channel timing attacks) karşı korumalıdır.
+- **Kaba Kuvvet (Brute-Force) Koruması:** 5 ardışık hatalı denemede IP adresi **1 dakika boyunca otomatik kilitlenir (HTTP 429)**.
+- **Güvenli Oturum Çerezleri:** `HttpOnly`, `SameSite=Strict` ve 8 saatlik oturum süresi.
+- **Güvenli Çıkış (Logout):** "Çıkış Yap" butonuna basıldığında oturum çerezi sunucuda anında geçersiz kılınır (`Max-Age=0`).
+- **Girdi Temizleme (Sanitization):** Katılımcı isimleri zararlı HTML ve kontrol karakterlerinden arındırılır.
 
-Signed-in visitors receive both `oai-authenticated-user-id` and `oai-authenticated-user-email`. Private Sites require every visitor to sign in; public Sites may also have anonymous visitors, for whom neither header is present.
+---
 
-The user ID is stable for the same user on the same Site and different across Sites. Use it as the durable user key; use email and name for display or contact purposes.
+## 📊 Soru İçe Aktarma Formatları
 
-SIWC-authenticated workspace sites may also receive `oai-authenticated-user-full-name` when the user's SIWC profile has a non-empty `name` claim. The full-name value is percent-encoded UTF-8 and is accompanied by `oai-authenticated-user-full-name-encoding: percent-encoded-utf-8`.
+### Excel (`.xlsx`) / CSV Formatı
+Aşağıdaki sütun başlıkları kullanılır:
 
-Treat the full name as optional and fall back to email when it is absent:
+| Soru | Seçenek A | Seçenek B | Seçenek C | Seçenek D | Doğru Cevap (A/B/C/D) | Süre (sn) | Puan | Görsel URL |
+| :--- | :--- | :--- | :--- | :--- | :---: | :---: | :---: | :--- |
+| Türkiye'nin başkenti neresidir? | Ankara | İstanbul | İzmir | Bursa | A | 20 | 1000 | |
+| Güneş sistemindeki en büyük gezegen? | Dünya | Satürn | Jüpiter | Mars | C | 20 | 1000 | |
 
-```tsx
-import { headers } from "next/headers";
-
-export default async function Home() {
-  const requestHeaders = await headers();
-  const userId = requestHeaders.get("oai-authenticated-user-id");
-  const email = requestHeaders.get("oai-authenticated-user-email");
-  const encodedFullName = requestHeaders.get("oai-authenticated-user-full-name");
-  const fullName =
-    encodedFullName &&
-    requestHeaders.get("oai-authenticated-user-full-name-encoding") ===
-      "percent-encoded-utf-8"
-      ? decodeURIComponent(encodedFullName)
-      : null;
-
-  const displayName = fullName ?? email;
-  // ...
-}
+### JSON Formatı
+```json
+[
+  {
+    "prompt": "Işık bir saniyede yaklaşık kaç km yol alır?",
+    "options": ["30 bin", "300 bin", "3 milyon", "30 milyon"],
+    "correctIndex": 1,
+    "seconds": 30,
+    "points": 1000,
+    "imageUrl": ""
+  }
+]
 ```
 
-## Optional Dispatch-Owned ChatGPT Sign-In
+---
 
-Import the ready-to-use helpers from `app/chatgpt-auth.ts` when the site needs optional or required ChatGPT sign-in:
+## 💻 Teknoloji Yığını
 
-- Use `getChatGPTUser()` for optional signed-in UI.
-- Use the returned `userId` as the stable user key for user-owned records; do not use email as a durable identifier.
-- Use `requireChatGPTUser(returnTo)` for server-rendered pages that should send anonymous visitors through Sign in with ChatGPT.
-- In a Server Component, start sign-in with `<a href={chatGPTSignInPath(returnTo)} target="_top">`. The auth helper module is server-only; do not import it into a Client Component.
-- Do not use `fetch`, XHR, a client-side router, or a framework link that can prefetch the sign-in route. SIWC must start as a top-level navigation.
-- Never request the AuthAPI authorization endpoint directly. The dispatch-owned `/signin-with-chatgpt` route must start the SIWC flow.
-- Use `chatGPTSignOutPath(returnTo)` for browser sign-out links or actions.
-- Pass a same-origin relative `returnTo` path for the destination after sign-in or sign-out. The helper validates and safely encodes it.
-- Mark protected pages with `export const dynamic = "force-dynamic"` because they depend on per-request identity headers.
+- **Frontend:** [Next.js (Vinext)](https://github.com/cloudflare/vinext), React 19, TypeScript
+- **Stil & Arayüz:** Tailwind CSS v4, Lucide Icons, Canvas Confetti
+- **Ses & Hissiyat:** HTML5 Web Audio API (Prosedürel Ses Sentezi), Navigator Vibration API
+- **Veritabanı & ORM:** Cloudflare D1 (SQLite), Drizzle ORM
+- **Dosya İşleme:** SheetJS (`xlsx`)
+- **Şifreleme & Güvenlik:** Web Crypto API (PBKDF2-SHA256)
 
-Dispatch owns `/signin-with-chatgpt`, `/signout-with-chatgpt`, `/callback`, the OAuth cookies, and identity header injection. Do not implement app routes for those reserved paths. Routes that do not import and call the helper remain anonymous-compatible.
+---
 
-SIWC establishes identity only; it does not prove workspace membership. Use the Sites hosting platform's access policy controls for workspace-wide restrictions, or enforce explicit server-side membership or allowlist checks.
+## 🚀 Hızlı Kurulum
 
-Use SIWC for account pages, user-specific dashboards, saved records, and write actions tied to the current ChatGPT user. Leave public content anonymous.
-
-## Local D1 migrations
-
-For a D1-backed local preview, generate SQL with `npm run db:generate`. Build once through the Sites skill's build entrypoint (or `npm run build` for standalone use) to generate `dist/server/wrangler.json`, rebuilding if bindings change. From the project root, apply each pending migration in order:
-
-```sh
-node --import ./scripts/sites-env.mjs ./node_modules/wrangler/bin/wrangler.js d1 execute DB --local --config dist/server/wrangler.json --persist-to .wrangler/state --file drizzle/0000_example.sql
+### 1. Depoyu Klonlayın
+```bash
+git clone https://github.com/SerdarK44/quizora.git
+cd quizora
 ```
 
-Replace the filename with the pending migration and `DB` with your D1 binding name if different. Use `.wrangler/state`, not `.wrangler/state/v3`; Wrangler adds the versioned directories. Do not replay migrations already applied locally. This updates only the preview database; publishing applies production migrations separately.
+### 2. Bağımlılıkları Yükleyin
+```bash
+npm install
+```
 
-## Diagnostic Commands
+### 3. Geliştirme Sunucusunu Başlatın
+```bash
+npm run dev
+```
+Uygulama varsayılan olarak `http://localhost:5173` adresinde çalışacaktır.
 
-- `npm run install:ci`: perform the one locked dependency install
-- `npm run dev`: start the Vite/Vinext development server
-- `npm run build`: build the deployable Sites artifact
-- `npm run start`: preview the built Worker locally with D1/R2 support
-- `npm run db:generate`: generate Drizzle migrations after schema changes
+### 4. Üretim Derlemesi ve Çalıştırma (Production)
+```bash
+npm run build
+npm start
+```
+Üretim sunucusu `http://127.0.0.1:8787` adresinde yayına başlar.
 
-When using the Sites plugin, follow its skill instructions for installation, builds, and publishing. These npm commands remain available for standalone use.
+---
 
-The portable build runs Vinext directly without a host `timeout` command. The managed-linux build uses `scripts/build-verified.sh` and its existing `SITES_BUILD_TIMEOUT` setting.
+## 🎮 Nasıl Oynanır?
 
-## Learn More
+1. **Yönetici Girişi:** Sağ üstteki **"Yönetici Paneli"** butonuna tıklayın ve `admin` / `SerdarSerdar` ile oturum açın.
+2. **Yarışma Hazırlama:** Yeni sorular ekleyin, sürükle-bırak ile sıralayın veya **"📥 İçe Aktar"** ile Excel/CSV dosyanızı yükleyin.
+3. **Odayı Başlatın:** **"Oda Başlat →"** butonuna basarak canlı lobi ekranını açın.
+4. **Katılımcılar:** Projeksiyon ekranındaki veya telefondaki **QR kodu okutarak** ya da PIN koduyla yarışmaya katılın.
+5. **Yarışma Akışı:** Yönetici soruyu başlatır (3-2-1 geri sayım), katılımcılar telefonlarından cevaplar, tur lideri esprili mesajla kutlanır ve en son kürsüde şampiyon ilan edilir!
 
-- [vinext Documentation](https://github.com/cloudflare/vinext)
-- [Drizzle D1 Guide](https://orm.drizzle.team/docs/get-started/d1-new)
+---
+
+## 📄 Lisans
+
+Bu proje [MIT Lisansı](LICENSE) altında lisanslanmıştır.

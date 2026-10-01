@@ -1,16 +1,61 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { getRawDb } from "../../../db";
+
+// PBKDF2-SHA256 (120,000 iterations, salt: 'quizora-admin-v1') hash of 'SerdarSerdar'
 const PASSWORD_HASH =
-  "79eceb95913939893f07bcc38a6fa2fdad0fb738899275667c1e530eaaa6263b";
+  "6b23a2f8865da913bcda1ea242a5d2b3ef6db1ed051ac2c3e17aba7c84ee4a4f";
 const SESSION =
   "7f5d4f2e8d27e2c41f7f9d99c99038eb510aa67c5acf62406d5c306b397da83b";
+
+// Brute-force protection: max 5 failed attempts per IP, then 60s cooldown
+const loginAttempts = new Map<string, { count: number; lockedUntil: number }>();
+
+function isRateLimited(ip: string): boolean {
+  const entry = loginAttempts.get(ip);
+  if (!entry) return false;
+  const now = Date.now();
+  if (entry.lockedUntil > now) return true;
+  if (now > entry.lockedUntil && entry.count >= 5) {
+    loginAttempts.delete(ip);
+    return false;
+  }
+  return false;
+}
+
+function recordLoginFailure(ip: string) {
+  const now = Date.now();
+  const entry = loginAttempts.get(ip) || { count: 0, lockedUntil: 0 };
+  entry.count += 1;
+  if (entry.count >= 5) {
+    entry.lockedUntil = now + 60 * 1000;
+  }
+  loginAttempts.set(ip, entry);
+}
+
+function clearLoginFailures(ip: string) {
+  loginAttempts.delete(ip);
+}
+
+function timingSafeEqual(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+  let diff = 0;
+  for (let i = 0; i < a.length; i++) {
+    diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  }
+  return diff === 0;
+}
+
 const json = (data: unknown, status = 200, headers?: HeadersInit) =>
   Response.json(data, { status, headers });
+
 const authed = (r: Request) =>
   (r.headers.get("cookie") || "")
     .split(";")
     .some((x) => x.trim() === `quizora_admin=${SESSION}`);
+
 const hex = (b: ArrayBuffer) =>
   [...new Uint8Array(b)].map((x) => x.toString(16).padStart(2, "0")).join("");
+
 async function passwordHash(password: string) {
   const key = await crypto.subtle.importKey(
     "raw",
@@ -32,6 +77,7 @@ async function passwordHash(password: string) {
     ),
   );
 }
+
 async function payload(r: Request) {
   try {
     return (await r.json()) as Record<string, any>;
@@ -39,6 +85,40 @@ async function payload(r: Request) {
     return {};
   }
 }
+
+async function generateUniqueRoomCode(db: D1Database): Promise<string> {
+  for (let attempt = 0; attempt < 10; attempt++) {
+    const code = String(Math.floor(100000 + Math.random() * 900000));
+    const existing = await db
+      .prepare("SELECT 1 FROM rooms WHERE code=?")
+      .bind(code)
+      .first();
+    if (!existing) return code;
+  }
+  return String(Math.floor(1000000 + Math.random() * 9000000));
+}
+
+async function cleanupStaleRooms(db: D1Database) {
+  try {
+    const oneDayAgo = Date.now() - 24 * 60 * 60 * 1000;
+    const oldRooms = await db
+      .prepare("SELECT id FROM rooms WHERE created_at < ?")
+      .bind(oneDayAgo)
+      .all<{ id: string }>();
+    if (oldRooms.results && oldRooms.results.length > 0) {
+      for (const r of oldRooms.results) {
+        await db.batch([
+          db.prepare("DELETE FROM answers WHERE room_id=?").bind(r.id),
+          db.prepare("DELETE FROM players WHERE room_id=?").bind(r.id),
+          db.prepare("DELETE FROM rooms WHERE id=?").bind(r.id),
+        ]);
+      }
+    }
+  } catch (e) {
+    console.error("Cleanup stale rooms error:", e);
+  }
+}
+
 async function listQuizzes(db: D1Database) {
   const quizzes = (
     await db
@@ -59,16 +139,26 @@ async function listQuizzes(db: D1Database) {
     riskEnabled: !!q.risk_enabled,
     questions: questions
       .filter((x) => x.quiz_id === q.id)
-      .map((x) => ({
-        prompt: x.prompt,
-        options: JSON.parse(x.options_json),
-        correctIndex: x.correct_index,
-        seconds: x.seconds,
-        points: x.max_points,
-        imageUrl: x.image_url || "",
-      })),
+      .map((x) => {
+        let options: string[] = [];
+        try {
+          const parsed = JSON.parse(x.options_json);
+          options = Array.isArray(parsed) ? parsed : [];
+        } catch {
+          options = ["A", "B", "C", "D"];
+        }
+        return {
+          prompt: String(x.prompt || ""),
+          options,
+          correctIndex: Math.max(0, Math.min(3, Number(x.correct_index) || 0)),
+          seconds: Math.max(5, Math.min(180, Number(x.seconds) || 20)),
+          points: Math.max(0, Math.min(10000, Number(x.max_points) || 1000)),
+          imageUrl: String(x.image_url || ""),
+        };
+      }),
   }));
 }
+
 export async function GET(request: Request) {
   if (!authed(request)) return json({ authenticated: false }, 401);
   try {
@@ -81,34 +171,74 @@ export async function GET(request: Request) {
     return json({ error: "Kayıtlı yarışmalar yüklenemedi." }, 500);
   }
 }
+
 export async function POST(request: Request) {
   const p = await payload(request),
     action = String(p.action || "");
+
   if (action === "login") {
-    if (
-      String(p.username) !== "admin" ||
-      (await passwordHash(String(p.password || ""))) !== PASSWORD_HASH
-    )
+    const ip =
+      request.headers.get("cf-connecting-ip") ||
+      request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+      "127.0.0.1";
+
+    if (isRateLimited(ip)) {
+      return json(
+        { error: "Çok fazla hatalı deneme yapıldı. Lütfen 1 dakika bekleyin." },
+        429,
+      );
+    }
+
+    const inputUser = String(p.username || "").trim();
+    const inputPass = String(p.password || "");
+    const passHash = await passwordHash(inputPass);
+
+    const isUserValid = inputUser === "admin";
+    const isPassValid = timingSafeEqual(passHash, PASSWORD_HASH);
+
+    if (!isUserValid || !isPassValid) {
+      recordLoginFailure(ip);
       return json({ error: "Kullanıcı adı veya şifre hatalı." }, 401);
+    }
+
+    clearLoginFailures(ip);
     return json({ authenticated: true }, 200, {
       "Set-Cookie": `quizora_admin=${SESSION}; Path=/; HttpOnly; SameSite=Strict; Max-Age=28800`,
     });
   }
+
+  if (action === "logout") {
+    return json({ authenticated: false }, 200, {
+      "Set-Cookie": `quizora_admin=; Path=/; HttpOnly; SameSite=Strict; Max-Age=0; Expires=Thu, 01 Jan 1970 00:00:00 GMT`,
+    });
+  }
+
   if (!authed(request))
     return json({ error: "Yönetici oturumu gerekli." }, 401);
   try {
     const db = getRawDb();
     if (action === "save" || action === "update") {
-      const title = String(p.title || "").trim(),
+      const title = String(p.title || "").trim().slice(0, 150),
         items = Array.isArray(p.questions) ? p.questions : [],
         riskEnabled = !!p.riskEnabled;
       if (!title || !items.length)
-        return json({ error: "Başlık ve soru gerekli." }, 400);
+        return json({ error: "Başlık ve en az bir soru gerekli." }, 400);
       const quizId =
           action === "update" ? String(p.quizId) : crypto.randomUUID(),
         now = Date.now();
-      const inserts = items.map((q: any, i: number) =>
-        db
+      const inserts = items.map((q: any, i: number) => {
+        const prompt = String(q.prompt || "").trim().slice(0, 500);
+        const options = Array.isArray(q.options)
+          ? q.options.map((o: unknown) => String(o ?? "").trim().slice(0, 200))
+          : ["", "", "", ""];
+        while (options.length < 4) options.push("");
+        const safeOptions = options.slice(0, 4);
+        const correctIndex = Math.max(0, Math.min(3, parseInt(String(q.correctIndex), 10) || 0));
+        const seconds = Math.max(5, Math.min(180, parseInt(String(q.seconds), 10) || 20));
+        const points = Math.max(0, Math.min(10000, parseInt(String(q.points), 10) || 1000));
+        const imageUrl = String(q.imageUrl || "").trim().slice(0, 1000);
+
+        return db
           .prepare(
             "INSERT INTO questions(id,quiz_id,position,prompt,options_json,correct_index,seconds,max_points,image_url) VALUES(?,?,?,?,?,?,?,?,?)",
           )
@@ -116,14 +246,14 @@ export async function POST(request: Request) {
             crypto.randomUUID(),
             quizId,
             i,
-            String(q.prompt),
-            JSON.stringify(q.options),
-            Number(q.correctIndex),
-            Number(q.seconds) || 20,
-            Number(q.points) || 1000,
-            String(q.imageUrl || ""),
-          ),
-      );
+            prompt,
+            JSON.stringify(safeOptions),
+            correctIndex,
+            seconds,
+            points,
+            imageUrl,
+          );
+      });
       if (action === "update") {
         const oldRooms = await db
           .prepare("SELECT id FROM rooms WHERE quiz_id=?")
@@ -221,7 +351,8 @@ export async function POST(request: Request) {
           )?.n || 0,
         );
       if (!count) return json({ error: "Yarışma bulunamadı." }, 404);
-      const roomCode = String(Math.floor(100000 + Math.random() * 900000)),
+      void cleanupStaleRooms(db);
+      const roomCode = await generateUniqueRoomCode(db),
         hostToken = crypto.randomUUID(),
         doubleQuestion = count > 2 ? Math.floor(Math.random() * count) : -1,
         quiz = await db
