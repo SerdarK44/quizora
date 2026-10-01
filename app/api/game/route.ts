@@ -1,6 +1,8 @@
 import { getRawDb } from "../../../db";
 const json=(data:unknown,status=200)=>Response.json(data,{status});
 const id=()=>crypto.randomUUID();
+const ADMIN_SESSION="7f5d4f2e8d27e2c41f7f9d99c99038eb510aa67c5acf62406d5c306b397da83b";
+const isAdmin=(r:Request)=>(r.headers.get("cookie")||"").split(";").some(x=>x.trim()===`quizora_admin=${ADMIN_SESSION}`);
 async function readBody(r:Request){try{return await r.json() as Record<string,unknown>}catch{return {}}}
 async function finishRound(db:D1Database,room:any,question:any){
   const locked=await db.prepare("UPDATE rooms SET status='results' WHERE id=? AND status='question'").bind(room.id).run();
@@ -37,6 +39,7 @@ export async function POST(request:Request){
  try{
   const db=getRawDb(),p=await readBody(request),action=String(p.action||"");
   if(action==="create"){
+   if(!isAdmin(request))return json({error:"Yönetici oturumu gerekli."},401);
    const title=String(p.title||"").trim(),items=Array.isArray(p.questions)?p.questions as any[]:[];
    if(!title||!items.length||items.some(q=>!String(q.prompt).trim()||!Array.isArray(q.options)||q.options.some((o:unknown)=>!String(o).trim())))return json({error:"Tüm soru ve seçenekleri doldur."},400);
    const quizId=id(),roomId=id(),hostToken=id(),roomCode=String(Math.floor(100000+Math.random()*900000)),now=Date.now();
